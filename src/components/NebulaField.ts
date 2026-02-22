@@ -8,13 +8,14 @@ import { createNoise2D, createNoise3D } from "simplex-noise";
  */
 export class NebulaField {
   // 纹理配置常量
-  private static readonly RESOLUTION = 1024;
+  private static readonly RESOLUTION = 512;
   private static readonly EDGE_MARGIN_RATIO = 0.01;
 
-  private static readonly FBM_OCTAVES = 5; // 分形叠加层数
-  private static readonly NOISE_SCALE = 2.5; // 噪声基础缩放
-  private static readonly WARP_STRENGTH = 0.8; // 域扭曲强度
+  private static readonly FBM_OCTAVES = 6; // 分形叠加层数，增加层数获得更细腻纹理
+  private static readonly NOISE_SCALE = 1.8; // 噪声基础缩放，降低获得更大的结构
+  private static readonly WARP_STRENGTH = 1.5; // 域扭曲强度，增强以获得明显的流动感
   private static readonly FACE_OFFSET = 0.3; // 距离面中心的偏移范围 [0, 1]
+  private static readonly EDGE_FALLOFF_POWER = 1.2; // 边缘衰减指数，越小边缘越柔和
 
   // 星云亮度配置
   // 亮度由三个因素共同决定：
@@ -24,13 +25,13 @@ export class NebulaField {
   // 最终亮度 = 颜色RGB * alpha * intensity * BRIGHTNESS_MULTIPLIER
   private static readonly NEBULA_INTENSITY_MIN = 0.7; // 单个星云最小强度
   private static readonly NEBULA_INTENSITY_MAX = 1.0; // 单个星云最大强度
-  private static readonly BRIGHTNESS_MULTIPLIER = 2.5; // 全局亮度倍数
+  private static readonly BRIGHTNESS_MULTIPLIER = 2; // 全局亮度倍数
 
   // 星云大小配置（角直径，单位：弧度）
   // 这个值决定了星云在球面上的大小，越大星云覆盖面积越大
   // 例如：0.5 弧度 ≈ 28.6°，1.0 弧度 ≈ 57.3°，1.5 弧度 ≈ 85.9°
-  private static readonly NEBULA_SIZE_MIN = 0.3; // 最小角直径（弧度）
-  private static readonly NEBULA_SIZE_MAX = 0.6; // 最大角直径（弧度）
+  private static readonly NEBULA_SIZE_MIN = 0.2; // 最小角直径（弧度）
+  private static readonly NEBULA_SIZE_MAX = 0.4; // 最大角直径（弧度）
 
   // 真实星云颜色主题（基于实际星云的发射光谱）
   private static readonly COLOR_THEMES: NebulaColorTheme[] = [
@@ -407,8 +408,12 @@ export class NebulaField {
         const normalizedDist = angleDistance / cloud.size;
 
         // 计算基础衰减（边缘渐隐）
+        // 使用更柔和的边缘衰减，更像气体扩散
         const falloff = 1 - normalizedDist;
-        const distanceFactor = Math.pow(falloff, 1.5); // 指数衰减
+        const distanceFactor = Math.pow(
+          falloff,
+          NebulaField.EDGE_FALLOFF_POWER,
+        );
 
         // 域扭曲 + FBM 采样
         const warpedPos = this.domainWarp(
@@ -463,7 +468,8 @@ export class NebulaField {
   }
 
   /**
-   * 域扭曲 - 制造漩涡效果
+   * 域扭曲 - 制造漩涡和气体流动效果
+   * 使用更强的扭曲和多层嵌套来模拟真实气体的湍流
    */
   private static domainWarp(
     x: number,
@@ -473,30 +479,57 @@ export class NebulaField {
   ): { x: number; y: number; z: number } {
     const strength = NebulaField.WARP_STRENGTH;
 
-    // 第一层扭曲
+    // 第一层扭曲 - 大尺度结构
     const q1 = noise3D(x, y, z);
-    const q2 = noise3D(x + 5.2, y + 1.3, z + 2.5);
+    const q2 = noise3D(x + 7.3, y + 2.1, z + 3.5);
+    const q3 = noise3D(x + 4.7, y + 8.9, z + 1.2);
 
-    const wx = x + strength * q1;
-    const wy = y + strength * q2;
-    const wz = z + strength * noise3D(x + 3.7, y + 4.1, z + 1.8);
+    let wx = x + strength * q1;
+    let wy = y + strength * q2;
+    let wz = z + strength * q3;
 
-    // 第二层扭曲
+    // 第二层扭曲 - 中等尺度结构
     const r1 = noise3D(
-      wx + 4.0 * q1 + 1.7,
-      wy + 4.0 * q2 + 9.2,
-      wz + 4.0 * noise3D(x, y, z) + 3.5,
+      wx + 5.1 * q1 + 2.3,
+      wy + 5.1 * q2 + 7.4,
+      wz + 5.1 * q3 + 3.9,
     );
     const r2 = noise3D(
-      wx + 4.0 * q1 + 8.3,
-      wy + 4.0 * q2 + 2.8,
-      wz + 4.0 * noise3D(x, y, z) + 6.1,
+      wx + 5.1 * q1 + 6.5,
+      wy + 5.1 * q2 + 1.8,
+      wz + 5.1 * q3 + 7.2,
+    );
+    const r3 = noise3D(
+      wx + 5.1 * q1 + 9.1,
+      wy + 5.1 * q2 + 4.2,
+      wz + 5.1 * q3 + 2.6,
+    );
+
+    wx = x + strength * r1;
+    wy = y + strength * r2;
+    wz = z + strength * r3;
+
+    // 第三层扭曲 - 小尺度细节
+    const s1 = noise3D(
+      wx + 3.2 * r1 + 1.1,
+      wy + 3.2 * r2 + 9.3,
+      wz + 3.2 * r3 + 5.7,
+    );
+    const s2 = noise3D(
+      wx + 3.2 * r1 + 5.8,
+      wy + 3.2 * r2 + 3.6,
+      wz + 3.2 * r3 + 8.1,
+    );
+    const s3 = noise3D(
+      wx + 3.2 * r1 + 8.4,
+      wy + 3.2 * r2 + 7.9,
+      wz + 3.2 * r3 + 1.4,
     );
 
     return {
-      x: wx + strength * r1,
-      y: wy + strength * r2,
-      z: wz + strength * noise3D(wx, wy, wz),
+      x: wx + strength * s1,
+      y: wy + strength * s2,
+      z: wz + strength * s3,
     };
   }
 
