@@ -25,13 +25,13 @@ export class NebulaField {
   // 最终亮度 = 颜色RGB * alpha * intensity * BRIGHTNESS_MULTIPLIER
   private static readonly NEBULA_INTENSITY_MIN = 0.7; // 单个星云最小强度
   private static readonly NEBULA_INTENSITY_MAX = 1.0; // 单个星云最大强度
-  private static readonly BRIGHTNESS_MULTIPLIER = 2; // 全局亮度倍数
+  private static readonly BRIGHTNESS_MULTIPLIER = 2.5; // 全局亮度倍数
 
   // 星云大小配置（角直径，单位：弧度）
   // 这个值决定了星云在球面上的大小，越大星云覆盖面积越大
   // 例如：0.5 弧度 ≈ 28.6°，1.0 弧度 ≈ 57.3°，1.5 弧度 ≈ 85.9°
-  private static readonly NEBULA_SIZE_MIN = 0.2; // 最小角直径（弧度）
-  private static readonly NEBULA_SIZE_MAX = 0.4; // 最大角直径（弧度）
+  private static readonly NEBULA_SIZE_MIN = 0.12; // 最小角直径（弧度）
+  private static readonly NEBULA_SIZE_MAX = 0.2; // 最大角直径（弧度）
 
   // 真实星云颜色主题（基于实际星云的发射光谱）
   private static readonly COLOR_THEMES: NebulaColorTheme[] = [
