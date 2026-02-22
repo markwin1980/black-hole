@@ -213,38 +213,4 @@ export class StarField {
       }
     }
   }
-
-  /**
-   * 将立方体面 UV 坐标转换为 3D 方向向量
-   * @param faceIndex 面索引 (0-5)
-   * @param u U坐标 [0, 1]
-   * @param v V坐标 [0, 1]
-   * @returns 3D 方向向量
-   */
-  private static cubeUVToDirection(
-    faceIndex: number,
-    u: number,
-    v: number,
-  ): THREE.Vector3 {
-    // 转换到 [-1, 1]
-    const uc = u * 2 - 1;
-    const vc = v * 2 - 1;
-
-    switch (faceIndex) {
-      case 0:
-        return new THREE.Vector3(1, -vc, -uc); // +X
-      case 1:
-        return new THREE.Vector3(-1, -vc, uc); // -X
-      case 2:
-        return new THREE.Vector3(uc, 1, vc); // +Y
-      case 3:
-        return new THREE.Vector3(uc, -1, -vc); // -Y
-      case 4:
-        return new THREE.Vector3(uc, -vc, 1); // +Z
-      case 5:
-        return new THREE.Vector3(-uc, -vc, -1); // -Z
-      default:
-        return new THREE.Vector3(0, 0, 1);
-    }
-  }
 }

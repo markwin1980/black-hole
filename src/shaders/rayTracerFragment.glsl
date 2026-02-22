@@ -7,7 +7,9 @@ uniform float uFov;
 uniform vec3 uBlackHolePosition;
 uniform float uSchwarzschildRadius;
 uniform bool uUseBlackHoleEffect;
-uniform samplerCube uCubeMap;
+uniform samplerCube uStarCubeMap;      // 星空 Cube Map
+uniform samplerCube uNebulaCubeMap;     // 星云 Cube Map
+uniform float uNebulaIntensity;         // 星云强度 [0, 1]
 uniform int uMaxSteps;
 uniform float uEscapeRadius;
 // 吸积盘参数
@@ -461,8 +463,22 @@ vec3 rayMarching(vec3 rayOrigin, vec3 rayDir) {
         lastPosition = rayOrigin;
     }
 
-    // 否则采样星空背景
-    return texture(uCubeMap, rayDir).rgb;
+    // 采样星空背景
+    vec3 starColor = texture(uStarCubeMap, rayDir).rgb;
+
+    // 采样星云背景（如果有）
+    vec4 nebulaColor = texture(uNebulaCubeMap, rayDir);
+
+    // 混合星空和星云
+    // 星云有 alpha 通道，使用 alpha 混合
+    // uNebulaIntensity 控制整体星云强度
+    vec3 finalBgColor = starColor;
+    if (nebulaColor.a > 0.0) {
+        float alpha = nebulaColor.a * uNebulaIntensity;
+        finalBgColor = mix(starColor, nebulaColor.rgb, alpha);
+    }
+
+    return finalBgColor;
 }
 
 void main() {

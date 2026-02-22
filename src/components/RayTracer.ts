@@ -6,8 +6,9 @@ import vertexShader from "../shaders/rayTracerVertex.glsl?raw";
 // @ts-ignore
 import fragmentShader from "../shaders/rayTracerFragment.glsl?raw";
 
-// 导入星空生成器
+// 导入星空和星云生成器
 import { StarField } from "./StarField";
+import { NebulaField } from "./NebulaField";
 
 /**
  * 亮斑配置参数
@@ -54,7 +55,9 @@ export class RayTracer {
     uBlackHolePosition: { value: new THREE.Vector3(0, 0, 0) },
     uSchwarzschildRadius: { value: 0 },
     uUseBlackHoleEffect: { value: false }, // 是否使用黑洞引力效果
-    uCubeMap: { value: null as THREE.CubeTexture | null },
+    uStarCubeMap: { value: null as THREE.CubeTexture | null }, // 星空 Cube Map
+    uNebulaCubeMap: { value: null as THREE.CubeTexture | null }, // 星云 Cube Map
+    uNebulaIntensity: { value: 1.0 }, // 星云强度 [0, 1]
     uMaxSteps: { value: 500 },
     uEscapeRadius: { value: 50.0 },
     // 吸积盘参数
@@ -77,7 +80,9 @@ export class RayTracer {
    * @param scene Three.js 场景对象
    */
   constructor(scene: THREE.Scene) {
-    this.uniforms.uCubeMap.value = StarField.generateCubeMap();
+    // 分别生成星空和星云的 Cube Map
+    this.uniforms.uStarCubeMap.value = StarField.generateCubeMap();
+    this.uniforms.uNebulaCubeMap.value = NebulaField.generateCubeMap();
     this.createShader(scene);
   }
 
@@ -225,6 +230,14 @@ export class RayTracer {
   }
 
   /**
+   * 设置星云强度
+   * @param intensity 星云强度 [0, 1]，0 表示只显示星空，1 表示星云全强度
+   */
+  setNebulaIntensity(intensity: number): void {
+    this.uniforms.uNebulaIntensity.value = Math.max(0, Math.min(1, intensity));
+  }
+
+  /**
    * 销毁资源
    */
   dispose(): void {
@@ -238,8 +251,11 @@ export class RayTracer {
     if (this.material) {
       this.material.dispose();
     }
-    if (this.uniforms.uCubeMap.value) {
-      this.uniforms.uCubeMap.value.dispose();
+    if (this.uniforms.uStarCubeMap.value) {
+      this.uniforms.uStarCubeMap.value.dispose();
+    }
+    if (this.uniforms.uNebulaCubeMap.value) {
+      this.uniforms.uNebulaCubeMap.value.dispose();
     }
   }
 }
