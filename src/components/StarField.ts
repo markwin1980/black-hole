@@ -26,9 +26,6 @@ export class StarField {
     // 生成星星数据
     const stars = this.generateStars();
 
-    // 生成星云数据
-    const nebulas = this.generateNebulas();
-
     // 创建6个面的 Canvas
     const faceCanvases: HTMLCanvasElement[] = [];
     for (let i = 0; i < 6; i++) {
@@ -37,9 +34,6 @@ export class StarField {
       canvas.height = StarField.RESOLUTION;
       faceCanvases.push(canvas);
     }
-
-    // 绘制星云（先绘制星云，作为背景层）
-    this.drawNebulas(faceCanvases, nebulas);
 
     // 绘制星星
     this.drawStars(faceCanvases, stars);
@@ -221,32 +215,36 @@ export class StarField {
   }
 
   /**
-   * 生成星云数据
-   * 在3D球面上随机生成星云，避免接缝附近
-   * @returns 星云数组
+   * 将立方体面 UV 坐标转换为 3D 方向向量
+   * @param faceIndex 面索引 (0-5)
+   * @param u U坐标 [0, 1]
+   * @param v V坐标 [0, 1]
+   * @returns 3D 方向向量
    */
-  private static generateNebulas(): Array<{
-    direction: THREE.Vector3;
-    color: THREE.Color;
-    size: number;
-    seed: number;
-  }> {
-    return [];
-  }
+  private static cubeUVToDirection(
+    faceIndex: number,
+    u: number,
+    v: number,
+  ): THREE.Vector3 {
+    // 转换到 [-1, 1]
+    const uc = u * 2 - 1;
+    const vc = v * 2 - 1;
 
-  /**
-   * 将星云绘制到立方体纹理的各个面上
-   * 使用 Perlin Noise + FBM 生成真实的星云效果
-   * @param faceCanvases 立方体6个面的canvas数组
-   * @param nebulas 星云数据数组
-   */
-  private static drawNebulas(
-    faceCanvases: HTMLCanvasElement[],
-    nebulas: Array<{
-      direction: THREE.Vector3;
-      color: THREE.Color;
-      size: number;
-      seed: number;
-    }>,
-  ): void {}
+    switch (faceIndex) {
+      case 0:
+        return new THREE.Vector3(1, -vc, -uc); // +X
+      case 1:
+        return new THREE.Vector3(-1, -vc, uc); // -X
+      case 2:
+        return new THREE.Vector3(uc, 1, vc); // +Y
+      case 3:
+        return new THREE.Vector3(uc, -1, -vc); // -Y
+      case 4:
+        return new THREE.Vector3(uc, -vc, 1); // +Z
+      case 5:
+        return new THREE.Vector3(-uc, -vc, -1); // -Z
+      default:
+        return new THREE.Vector3(0, 0, 1);
+    }
+  }
 }

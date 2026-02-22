@@ -133,30 +133,6 @@ $$D = \frac{1}{\gamma(1 - \beta \cos\theta)}$$
 3. **多普勒效应**: 相对论公式，无任何经验参数
 4. **角速度**: 开普勒第三定律 $\omega \propto r^{-3/2}$
 
-## 项目结构
-
-```
-black-hole/
-├── docs/
-│   ├── claude/
-│   │   └── STRUCT.md          # 项目目录结构
-│   └── reference/
-│       └── PHYSICS_LAWS.md    # 物理规律参考
-├── src/
-│   ├── components/
-│   │   ├── RayTracer.ts        # 光线追踪器
-│   │   └── SceneManager.ts     # 场景管理器
-│   ├── shaders/
-│   │   ├── rayTracerVertex.glsl   # 顶点着色器
-│   │   └── rayTracerFragment.glsl # 片元着色器（核心）
-│   ├── main.ts                 # 应用入口
-│   └── style.css               # 全局样式
-├── index.html                  # HTML 入口
-├── package.json                # npm 配置
-├── tsconfig.json               # TypeScript 配置
-└── vite.config.ts              # Vite 配置
-```
-
 ## 安装与运行
 
 ### 安装依赖
