@@ -443,14 +443,32 @@ vec3 rayMarching(vec3 rayOrigin, vec3 rayDir) {
                 // 生成吸积盘程序化纹理颜色
                 vec3 diskColor = getAccretionDiskColor(intersection);
 
-                // 计算交点处的物质速度（开普勒轨道速度）
-                vec3 velocity = getDiskVelocity(intersection);
+                // 计算相机的右方向向量（屏幕向右）
+                vec3 target = vec3(0.0, 0.0, 0.0);
+                vec3 forward = normalize(target - uCameraPosition);
+                vec3 cameraUp = vec3(0.0, 1.0, 0.0);
+                vec3 cameraRight = normalize(cross(cameraUp, forward));
 
-                // 计算观察方向（从交点指向相机）
-                vec3 viewDir = normalize(uCameraPosition - intersection);
+                // 计算从相机到交点的向量
+                vec3 fromCamera = intersection - uCameraPosition;
 
-                // 计算相对论多普勒系数
-                float dopplerFactor = getDopplerFactor(velocity, viewDir);
+                // 计算该点在相机右方向上的投影
+                // 负值 = 左边（蓝移），正值 = 右边（红移）
+                float screenPos = dot(fromCamera, cameraRight);
+
+                // 计算到黑洞中心的距离，归一化到 [0, 1]
+                float normalizedRadius = (distanceToCenter - innerRadius) / (outerRadius - innerRadius);
+
+                // 根据半径调整多普勒强度：内圈更强，外圈更弱
+                // 内圈速度快，多普勒效应更明显
+                float baseDopplerStrength = 4.5;
+                float radiusFactor = 1.0 - normalizedRadius * 0.9; // 外圈降为 40%
+                float dopplerStrength = baseDopplerStrength * radiusFactor;
+
+                // 根据屏幕位置计算多普勒因子
+                // 左边：screenPos < 0 → 蓝移（D > 1）
+                // 右边：screenPos > 0 → 红移（D < 1）
+                float dopplerFactor = 1.0 - screenPos * dopplerStrength / length(fromCamera);
 
                 // 应用多普勒效应到颜色
                 vec3 finalColor = applyDopplerEffect(diskColor, dopplerFactor);
